@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:oauth2="http://www.mulesoft.org/schema/mule/oauth2" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/oauth2 http://www.mulesoft.org/schema/mule/oauth2/current/mule-oauth2.xsd">
+
+	<http:request-config name="DriveOAuth_Request_Configuration" protocol="HTTPS" host="${google.drive.host}" port="${google.drive.port}" basePath="${google.drive.basepath}"
+		doc:name="HTTP Request Configuration">
+		<oauth2:authorization-code-grant-type clientId="${oauth.clientid}"
+			clientSecret="${oauth.clientsecret}" redirectionUrl="${oauth.redirection.url}">
+			<oauth2:authorization-request authorizationUrl="${google.drive.authorization.url}" localAuthorizationUrl="${mule.localauthorization.url}"
+				scopes="${google.drive.scopes}" />
+			<oauth2:token-request tokenUrl="${google.drive.token.url}">
+				<oauth2:token-response accessToken="#[json://access_token]" refreshToken="#[json://access_token]" />
+			</oauth2:token-request>
+		</oauth2:authorization-code-grant-type>
+	</http:request-config>
+
+	<http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration" />
+
+	<flow name="googledrive-oauth2Flow">
+		<http:listener config-ref="HTTP_Listener_Configuration" path="/" doc:name="HTTP" />
+		<http:request config-ref="DriveOAuth_Request_Configuration" path="${google.drive.filepath}" method="GET" doc:name="HTTP: Drive via OAuth2" />
+		<logger message="#[payload]" level="INFO" doc:name="Logger" />
+	</flow>
+</mule>
